@@ -5,9 +5,11 @@ import requests.sessions
 
 from . import memrise_markdown
 
+
 def utcToLocal(utcDt):
-    offset = datetime.datetime.fromtimestamp(86400)-datetime.datetime.utcfromtimestamp(86400)
-    return utcDt+offset
+    offset = datetime.datetime.fromtimestamp(86400) - datetime.datetime.utcfromtimestamp(86400)
+    return utcDt + offset
+
 
 def sanitizeName(name, default=""):
     name = re.sub("<.*?>", "", name)
@@ -17,6 +19,7 @@ def sanitizeName(name, default=""):
     if not name:
         return default
     return name
+
 
 class Course(object):
     def __init__(self, courseId):
@@ -53,6 +56,7 @@ class Course(object):
                 return pool.getThing(thingId)
         return None
 
+
 class Direction(object):
     def __init__(self, front=None, back=None):
         self.front = front
@@ -72,6 +76,7 @@ class Direction(object):
 
     def __str__(self):
         return "{} -> {}".format(self.front, self.back)
+
 
 class Schedule(object):
     def __init__(self):
@@ -95,6 +100,7 @@ class Schedule(object):
     def getDirections(self):
         return list(self.directionThing.keys())
 
+
 class ScheduleInfo(object):
     def __init__(self):
         self.thingId = None
@@ -107,6 +113,7 @@ class ScheduleInfo(object):
         self.incorrect = 0
         self.streak = 0
         self.due = datetime.date.today()
+
 
 class MemCollection(object):
     def __init__(self):
@@ -132,6 +139,7 @@ class MemCollection(object):
     def countDirections(self):
         return len(self.directionThing.keys())
 
+
 class Mem(object):
     def __init__(self, memId=None):
         self.id = memId
@@ -142,6 +150,7 @@ class Mem(object):
 
     def get(self):
         return self.text
+
 
 class Level(object):
     def __init__(self, levelId):
@@ -160,6 +169,7 @@ class Level(object):
     def __len__(self):
         return len(self.things)
 
+
 class NameUniquifier(object):
     def __init__(self):
         self.names = {}
@@ -171,6 +181,7 @@ class NameUniquifier(object):
 
         self.names[key] += 1
         return "{} {}".format(key, self.names[key])
+
 
 class Field(object):
     Text = 'text'
@@ -184,17 +195,20 @@ class Field(object):
         self.name = name
         self.index = index
 
+
 class Column(Field):
     Types = [Field.Text, Field.Audio, Field.Image, Field.Video]
 
     def __init__(self, colType, name, index):
         super(Column, self).__init__(colType, name, index)
 
+
 class Attribute(Field):
     Types = [Field.Text]
 
     def __init__(self, attrType, name, index):
         super(Attribute, self).__init__(attrType, name, index)
+
 
 class Pool(object):
     def __init__(self, poolId=None):
@@ -347,12 +361,14 @@ class Pool(object):
     def countAttributes(self):
         return len(self.attributes)
 
+
 class TextColumnData(object):
     def __init__(self):
         self.values = []
         self.alternatives = []
         self.hiddenAlternatives = []
         self.typingCorrects = []
+
 
 class DownloadableFile(object):
     def __init__(self, remoteUrl=None):
@@ -361,6 +377,7 @@ class DownloadableFile(object):
 
     def isDownloaded(self):
         return bool(self.localUrl)
+
 
 class MediaColumnData(object):
     def __init__(self, files=[]):
@@ -388,9 +405,11 @@ class MediaColumnData(object):
     def allDownloaded(self):
         return all([f.isDownloaded() for f in self.files])
 
+
 class AttributeData(object):
     def __init__(self):
         self.values = []
+
 
 class Thing(object):
     def __init__(self, thingId):
@@ -511,6 +530,7 @@ class Thing(object):
     def getLocalImageUrls(self, nameOrIndex):
         return self.getImageColumnData(nameOrIndex).getLocalUrls()
 
+
 class ThingLoader(object):
     def __init__(self, pool):
         self.pool = pool
@@ -598,6 +618,7 @@ class ThingLoader(object):
     def __getAttributes(cell):
         return list(map(str.strip, cell.get("val", "").split(",")))
 
+
 class CourseLoader(object):
     def __init__(self, service):
         self.service = service
@@ -630,7 +651,7 @@ class CourseLoader(object):
         self.notify('levelCountChanged', self.levelCount)
         self.notify('thingCountChanged', self.thingCount)
 
-        for levelIndex in range(1,self.levelCount+1):
+        for levelIndex in range(1, self.levelCount + 1):
             try:
                 level = self.loadLevel(course, levelIndex)
                 if level:
@@ -749,8 +770,11 @@ class CourseLoader(object):
                 thing.pool.schedule.add(self.loadScheduleInfo(userData, thing.pool))
                 if userData["mem_id"] and not thing.pool.mems.has(direction, thing):
                     try:
-                        memData = self.service.loadMemData(userData["mem_id"], userData["thing_id"], int(userData["learnable_id"]), userData["column_a"], userData["column_b"])
-                        thing.pool.mems.add(self.loadMem(userData, memData, thing.pool, self.service.toAbsoluteMediaUrl))
+                        memData = self.service.loadMemData(userData["mem_id"], userData["thing_id"],
+                                                           int(userData["learnable_id"]), userData["column_a"],
+                                                           userData["column_b"])
+                        thing.pool.mems.add(
+                            self.loadMem(userData, memData, thing.pool, self.service.toAbsoluteMediaUrl))
                     except MemNotFoundError:
                         pass
 
@@ -762,6 +786,7 @@ class CourseLoader(object):
             self.notify('thingLoaded', thing)
 
         return level
+
 
 class IncompleteReadHttpAndHttpsHandler(urllib.request.HTTPHandler, urllib.request.HTTPSHandler):
     def __init__(self, debuglevel=0):
@@ -789,7 +814,8 @@ class IncompleteReadHttpAndHttpsHandler(urllib.request.HTTPHandler, urllib.reque
     def do_open_wrapped(self, http_class, req, **http_conn_args):
         response = self.do_open(http_class, req, **http_conn_args)
         response.read_savedoriginal = response.read
-        reopen10 = functools.partial(self.do_open, functools.partial(self.makeHttp10, http_class, **http_conn_args), req)
+        reopen10 = functools.partial(self.do_open, functools.partial(self.makeHttp10, http_class, **http_conn_args),
+                                     req)
         response.read = functools.partial(self.read, response, reopen10)
         return response
 
@@ -797,23 +823,29 @@ class IncompleteReadHttpAndHttpsHandler(urllib.request.HTTPHandler, urllib.reque
         return self.do_open_wrapped(http.client.HTTPConnection, req)
 
     def https_open(self, req):
-        return self.do_open_wrapped(http.client.HTTPSConnection, req, context=self._context, check_hostname=self._check_hostname)
+        return self.do_open_wrapped(http.client.HTTPSConnection, req, context=self._context,
+                                    check_hostname=self._check_hostname)
+
 
 class MemriseError(RuntimeError):
     pass
 
+
 class LevelNotFoundError(MemriseError):
     pass
 
+
 class MemNotFoundError(MemriseError):
     pass
+
 
 class Service(object):
     def __init__(self, downloadDirectory=None, cookiejar=None):
         self.downloadDirectory = downloadDirectory
         if cookiejar is None:
             cookiejar = http.cookiejar.CookieJar()
-        self.opener = urllib.request.build_opener(IncompleteReadHttpAndHttpsHandler, urllib.request.HTTPCookieProcessor(cookiejar))
+        self.opener = urllib.request.build_opener(IncompleteReadHttpAndHttpsHandler,
+                                                  urllib.request.HTTPCookieProcessor(cookiejar))
         self.session = requests.Session()
         self.session.cookies = cookiejar
 
@@ -822,8 +854,8 @@ class Service(object):
             return self.opener.open(url)
         except urllib.error.URLError as e:
             if e.errno == errno.ECONNRESET and maxAttempts > attempt:
-                time.sleep(1.0*attempt)
-                return self.openWithRetry(url, maxAttempts, attempt+1)
+                time.sleep(1.0 * attempt)
+                return self.openWithRetry(url, maxAttempts, attempt + 1)
             else:
                 raise
         except http.client.BadStatusLine:
@@ -831,12 +863,13 @@ class Service(object):
             # so I regret that all we can do is wait and retry.
             if maxAttempts > attempt:
                 time.sleep(0.1)
-                return self.openWithRetry(url, maxAttempts, attempt+1)
+                return self.openWithRetry(url, maxAttempts, attempt + 1)
             else:
                 raise
 
     def isLoggedIn(self):
-        response = self.session.get('https://app.memrise.com/v1.17/me/', headers={'Referer': 'https://www.memrise.com/app'})
+        response = self.session.get('https://app.memrise.com/v1.17/me/',
+                                    headers={'Referer': 'https://www.memrise.com/app'})
         return response.status_code == 200
 
     def login(self, username, password):
@@ -856,7 +889,8 @@ class Service(object):
             return False
         token = obtain_login_token_res.json()["access_token"]["access_token"]
 
-        actual_login_res = self.session.get('https://app.memrise.com/v1.17/auth/web/', params={'invalidate_token_after': 'true', 'token': token})
+        actual_login_res = self.session.get('https://app.memrise.com/v1.17/auth/web/',
+                                            params={'invalidate_token_after': 'true', 'token': token})
 
         if not actual_login_res.json()["success"]:
             return False
@@ -885,7 +919,7 @@ class Service(object):
         if levelCount == 0:
             raise MemriseError("Can't get level count")
 
-        for levelIndex in range(1,levelCount+1):
+        for levelIndex in range(1, levelCount + 1):
             try:
                 return self.loadLevelData(courseId, levelIndex)
             except LevelNotFoundError:
@@ -930,7 +964,9 @@ class Service(object):
                         return memData
             else:
                 raise
-        raise MemNotFoundError("Mem not found (memId={}, thingId={}, learnableId={}, colA={}, colB={})".format(memId, thingId, learnableId, colA, colB))
+        raise MemNotFoundError(
+            "Mem not found (memId={}, thingId={}, learnableId={}, colA={}, colB={})".format(memId, thingId, learnableId,
+                                                                                            colA, colB))
 
     @staticmethod
     def getCourseIdFromUrl(url):
@@ -950,7 +986,8 @@ class Service(object):
 
     @staticmethod
     def getJsonLevelUrl(courseId, levelIndex):
-        return "https://app.memrise.com/ajax/session/?course_id={:d}&level_index={:d}&session_slug=preview".format(courseId, levelIndex)
+        return "https://app.memrise.com/ajax/session/?course_id={:d}&level_index={:d}&session_slug=preview".format(
+            courseId, levelIndex)
 
     @staticmethod
     def getJsonPoolUrl(poolId):
@@ -962,11 +999,13 @@ class Service(object):
 
     @staticmethod
     def getJsonMemUrl(memId, thingId, colA, colB):
-        return "https://app.memrise.com/api/mem/get/?mem_id={:d}&thing_id={:d}&column_a={:d}&column_b={:d}".format(memId, thingId, colA, colB)
+        return "https://app.memrise.com/api/mem/get/?mem_id={:d}&thing_id={:d}&column_a={:d}&column_b={:d}".format(
+            memId, thingId, colA, colB)
 
     @staticmethod
     def getJsonManyMemUrl(thingId, learnableId):
-        return "https://app.memrise.com/api/mem/get_many_for_thing/?thing_id={:d}&learnable_id={:d}".format(thingId, learnableId)
+        return "https://app.memrise.com/api/mem/get_many_for_thing/?thing_id={:d}&learnable_id={:d}".format(thingId,
+                                                                                                            learnableId)
 
     @staticmethod
     def toAbsoluteMediaUrl(url):
